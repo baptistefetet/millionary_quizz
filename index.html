@@ -198,7 +198,7 @@
 					<div class="capsule">
 						<div class="question-text" id="questionText">Charge un fichier de questions pour commencer.</div>
 					</div>
-					<div class="answers">
+					<div class="answers" id="answers" style="display:none;">
 						<div class="answer" data-index="1"><span class="letter">A</span><span class="text"></span></div>
 						<div class="answer" data-index="2"><span class="letter">B</span><span class="text"></span></div>
 						<div class="answer" data-index="3"><span class="letter">C</span><span class="text"></span></div>
@@ -262,6 +262,7 @@
 			btnStart: document.getElementById('btnStart'),
 			questionText: document.getElementById('questionText'),
 			answers: Array.from(document.querySelectorAll('.answer')),
+			answersBlock: document.getElementById('answers'),
 			moneyTree: document.getElementById('moneyTree'),
 			stage: document.querySelector('.stage'),
 			lifeline5050: document.getElementById('lifeline5050'),
@@ -347,6 +348,7 @@
 		function showQuestion(){
 			const entry = state.questions[state.index];
 			if(!entry) return gameOver(false);
+			els.answersBlock.style.display = 'grid';
 			els.questionText.textContent = entry.q;
 			els.answers.forEach((el, i) => {
 				el.classList.remove('disabled','selected','correct','wrong');
