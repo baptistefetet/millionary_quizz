@@ -176,7 +176,7 @@
 				<div class="emblem"></div>
 				<h1>Qui veut gagner des millions — Quiz</h1>
 			</div>
-			<div class="controls">
+			<div class="controls" id="fileControls">
 				<div class="file-row">
 					<input id="file" type="file" accept=".txt,.csv" />
 					<span class="badge" id="fileStatus">Aucun fichier chargé</span>
@@ -273,6 +273,7 @@
 			modal: document.getElementById('modal'),
 			toast: document.getElementById('toast'),
 			tools: document.getElementById('tools'),
+			fileControls: document.getElementById('fileControls'),
 		};
 
 		// === File loading ===
@@ -334,7 +335,13 @@
 		}
 
 		// === Game flow ===
-		els.btnStart.addEventListener('click', () => startGame());
+		els.btnStart.addEventListener('click', () => {
+			if (state.active) {
+				stopGame();
+			} else {
+				startGame();
+			}
+		});
 		function startGame(){
 			state.index = 0;
 			state.active = true;
@@ -343,8 +350,45 @@
 			els.lifeline5050.classList.remove('used');
 			els.lifelinePhone.classList.remove('used');
 			els.lifelineAudience.classList.remove('used');
-			els.tools.style.display = 'grid'; // <-- Affiche les jokers au démarrage
+			els.tools.style.display = 'grid';
+			// Cacher la sélection de fichier et changer le bouton
+			els.fileControls.querySelector('.file-row').style.display = 'none';
+			els.btnStart.textContent = 'Arrêter';
 			showQuestion();
+		}
+
+		function stopGame() {
+			state.active = false;
+			state.locked = false;
+			els.tools.style.display = 'none';
+			// Réafficher la sélection de fichier et remettre le bouton
+			els.fileControls.querySelector('.file-row').style.display = '';
+			resetUIAfterStop();
+		}
+
+		// Ajout d'une fonction utilitaire pour la réinitialisation du bouton et de la scène
+		function resetUIAfterStop() {
+			els.btnStart.textContent = 'Démarrer';
+			// Désactive le bouton si aucun fichier n'est chargé
+			if (state.questions.length === 0) {
+				els.btnStart.disabled = true;
+			}
+			// Réinitialise la scène comme au tout début
+			els.answersBlock.style.display = 'none';
+			els.questionText.textContent = 'Charge un fichier de questions pour commencer.';
+			// Nettoie les états CSS des réponses
+			els.answers.forEach(el => {
+				el.classList.remove('disabled','selected','correct','wrong');
+				el.querySelector('.text').textContent = '';
+				el.style.display = 'block';
+				el.style.pointerEvents = 'auto';
+			});
+			// Réinitialise la position/opacity de la question
+			const qw = document.querySelector('.question-wrap');
+			if (qw) {
+				qw.style.transform = '';
+				qw.style.opacity = '';
+			}
 		}
 
 		function showQuestion(){
@@ -423,6 +467,7 @@
 				<div style="display:flex; justify-content:flex-end"><button id="closeVictory">Fermer</button></div>`);
 			document.getElementById('closeVictory').onclick = () => closeModal();
 			state.active = false;
+			resetUIAfterStop(); // <-- Ajouté ici
 		}
 
 		function gameOver(){
@@ -432,6 +477,7 @@
 				<div style="display:flex; justify-content:flex-end"><button id="closeOver">OK</button></div>`);
 			document.getElementById('closeOver').onclick = () => closeModal();
 			state.active = false;
+			resetUIAfterStop(); // <-- Ajouté ici
 		}
 
 		// === Lifelines ===
@@ -505,6 +551,8 @@
 
 		// Masquer les jokers au chargement initial
 		els.tools.style.display = 'none';
+		// Au chargement initial, s'assurer que le bouton est bien "Démarrer"
+		els.btnStart.textContent = 'Démarrer';
 	</script>
 </body>
 </html>
