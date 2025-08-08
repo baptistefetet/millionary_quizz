@@ -1,0 +1,15 @@
+"Quelle est la bonne réponse ?","La réponse A, qui est incorrecte.","La réponse B, qui est fausse.","La réponse C, qui est la bonne réponse.","La réponse D, qui est une mauvaise réponse.",C
+"Quelle est la bonne réponse ?","Celle forcément vraie parce que toutes les autres sont fausses.","Celle forcément fausse parce que toutes les autres sont fausses.","Celle forcément vraie parce que toutes les autres sont vraies.","Celle forcément fausse parce que toutes les autres sont vraies.",A
+"Quelle est la mauvaise réponse ?","La réponse A, qui est la bonne réponse.","La réponse B, qui est vraie.","La réponse C, qui est correcte.","La réponse D, qui n'est pas la bonne réponse.",D
+"Quelle est la mauvaise réponse ?","Celle forcément vraie parce que toutes les autres sont fausses.","Celle forcément fausse parce que toutes les autres sont fausses.","Celle forcément vraie parce que toutes les autres sont vraies.","Celle forcément fausse parce que toutes les autres sont vraies.",D
+"Quelle est la mauvaise réponse ?","Pas la réponse A : elle est correcte.","Pas la réponse B, ni la réponse précédente.","Pas la réponse C, ni les réponses précédentes.","Pas la réponse D, ni les réponses précédentes.",D
+"Quelle est la bonne réponse ?","La réponse D","La réponse A","La réponse C","La réponse B",C
+"Quelle est la bonne réponse ?","La réponse B","La réponse B","La réponse B","La réponse D",D
+"Quelle est la bonne réponse ?","Pas la réponse C","La réponse D","Pas la réponse D","La réponse A",C
+"Quelle est la mauvaise réponse ?","La réponse B, ou la réponse D","Ni la réponse C, ni la réponse D","La réponse A, ou la réponse D","Soit ce n'est pas la réponse A, soit ce n'est pas la réponse C",A
+"Quelle réponse vous fait perdre ?","La réponse C de la question 1","La réponse A de la question 9","La réponse B de la question 5","La réponse D de la question 13",C
+" ","Vu qu'il n'y a pas de question, choisissez-moi, c'est moi la plus belle !","Les amis, faites c'que vous voulez mais choisissez pas C ni D.","Ce n'est pas A ! Choisissez autre chose, je vous prie.","Ne les écoutez pas. Dites ''Réponse D, dernier mot !''",C
+" ","Quoi ?! C'est impossible de répondre !!","Hé A, on peut rouspéter tant qu'on veux, c'est encore C la bonne réponse.","Patience B, il y a au moins une question dont tu es la bonne réponse.","Tsss, vous paniquez pour rien.",D
+" ","Encore ? Moi j'me tire, à plus ! Spoiler alert : c'est D qui gagne le million !","Pff, ce quiz n'a aucune logique.","Tu m'impressionnes D, d'avoir cassé ma série de victoires.","Calmons-nous. Nous devons surveiller ce que l'on dit.",D
+" "," ","A est vraiment partie LOL. Ca sera donc l'un de nous trois.","Palpitant ! D a encore gagné ! La prochaine fois c'est mon tour !","Taisez-vous, sinon ils vont trouver la bonne réponse.",A
+" "," ","  ","   ","    ",A

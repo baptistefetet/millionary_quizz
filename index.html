@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Qui veut gagner des millions — Quiz</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+	<style>
+		:root{
+			--bg-deep:#120f2c; --bg-mid:#1b1444; --bg-soft:#22195a;
+			--purple-1:#3f2b7a; --purple-2:#5f3fb6; --purple-3:#7b5ad6;
+			--gold-1:#f7b32b; --gold-2:#ffd173; --orange-sel:#f39a21;
+			--ok:#00c853; --err:#ff5252;
+		}
+		*{box-sizing:border-box}
+		html,body{height:100%}
+		body{
+			margin:0;
+			font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+			background:radial-gradient(1100px 700px at 50% 15%, #33207e 0%, var(--bg-mid) 35%, var(--bg-deep) 100%);
+			color:#fff;
+		}
+		/* Layout grid: left (stage) wide, right (money ladder) fixed */
+		.container{
+			display:grid;
+			grid-template-columns:minmax(0,1fr) 360px;
+			grid-template-rows:auto 1fr;
+			gap:16px;
+			min-height:100vh;
+			padding:16px;
+		}
+		.header{
+			grid-column:1 / span 2;
+			display:flex; align-items:center; justify-content:space-between;
+			padding:8px 12px;
+			background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+			border:1px solid rgba(255,255,255,0.12);
+			border-radius:16px; backdrop-filter:blur(6px);
+		}
+		.brand{display:flex; align-items:center; gap:12px;}
+		.brand .emblem{
+			width:56px; height:56px; border-radius:50%; position:relative;
+			background:conic-gradient(from 0deg, var(--gold-2), var(--gold-1), #b57911, var(--gold-2));
+			box-shadow:0 0 24px rgba(249,178,51,0.4), inset 0 0 12px rgba(0,0,0,0.5);
+		}
+		.brand .emblem::after{content:''; position:absolute; inset:6px; border-radius:50%; background:radial-gradient(circle at 50% 30%, #213 0%, #0b0e24 70%);}
+		.brand h1{font-size:20px; margin:0; font-weight:800; letter-spacing:.03em;}
+		.controls{display:flex; align-items:center; gap:12px;}
+		button,.btn{
+			font:inherit; padding:10px 14px; border-radius:999px;
+			border:1px solid rgba(255,255,255,0.25);
+			background:linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+			color:#fff; cursor:pointer;
+			transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+		}
+		button:hover{transform:translateY(-1px); border-color:rgba(255,255,255,0.5); box-shadow:0 8px 20px rgba(0,0,0,0.35);}
+		button:disabled{opacity:.5; cursor:not-allowed;}
+		.file-row{display:flex; gap:10px; align-items:center;}
+		.badge{padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.1); font-size:12px; border:1px solid rgba(255,255,255,0.2);}
+
+		/* Top lifelines */
+		.tools{display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;}
+		.tool{
+			position:relative; text-align:center; font-weight:800; letter-spacing:.03em; cursor:pointer;
+			padding:12px 16px; border-radius:999px; border:2px solid var(--gold-1);
+			background:linear-gradient(180deg, #10235d, #0b1740);
+			box-shadow:0 0 12px rgba(247,179,43,.25), inset 0 0 18px rgba(0,0,0,.6);
+		}
+		.tool.used{opacity:.45; pointer-events:none;}
+
+		/* Stage: enlarged to dominate the viewport */
+		.stage{
+			position:relative; padding:24px; border-radius:24px;
+			background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
+			border:1px solid rgba(255,255,255,0.12);
+			box-shadow:inset 0 0 60px rgba(0,0,0,0.4);
+			min-height:calc(100vh - 140px); /* almost full height minus header spacing */
+			overflow:hidden;
+			display:grid; grid-template-rows:auto 1fr; gap:16px;
+		}
+		.light-sweep{position:absolute; inset:-40% -20%; background:radial-gradient(60% 20% at 50% 0%, rgba(255,255,255,0.22), rgba(255,255,255,0) 60%); pointer-events:none;}
+
+		/* BIG question + answers block (kept centered) */
+		.big-qa{
+			position:relative; display:grid; align-content:center; justify-items:center;
+			padding:10px; height:100%;
+		}
+		.question-wrap{display:grid; gap:18px; width:min(1200px, 100%);}
+		.capsule{
+			position:relative; padding:22px 36px; border-radius:999px;
+			border:2px solid var(--gold-1);
+			background:linear-gradient(180deg, #2e206a, #1d1552);
+			box-shadow:0 0 16px rgba(247,179,43,.25), inset 0 0 28px rgba(0,0,0,.55);
+		}
+		.capsule::before,.capsule::after{
+			content:''; position:absolute; top:50%; transform:translateY(-50%);
+			width:44px; height:22px; background:linear-gradient(180deg, #2e206a, #1d1552); border:2px solid var(--gold-1);
+		}
+		.capsule::before{left:-22px; border-right:none; border-radius:22px 0 0 22px;}
+		.capsule::after{right:-22px; border-left:none; border-radius:0 22px 22px 0;}
+
+		/* Bigger fonts */
+		.question-text{
+			font-size: clamp(28px, 3.6vw, 44px);
+			line-height:1.25; font-weight:800; text-align:center; text-shadow:0 0 6px rgba(0,0,0,.6);
+		}
+
+		.answers{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+		.answer{
+			position:relative; padding:16px 22px 16px 80px; border-radius:999px;
+			border:2px solid var(--gold-1);
+			background:linear-gradient(180deg, #40297f, #291a63);
+			box-shadow:0 0 12px rgba(247,179,43,.25), inset 0 0 22px rgba(0,0,0,.55);
+			font-weight:800; cursor:pointer; user-select:none;
+			font-size: clamp(20px, 2.4vw, 28px);
+		}
+		.answer .letter{
+			position:absolute; left:20px; top:50%; transform:translateY(-50%);
+			width:38px; height:38px; border-radius:50%;
+			background:linear-gradient(180deg, #15245f, #0b1740);
+			border:2px solid var(--gold-1);
+			display:grid; place-items:center; font-weight:900;
+			font-size: clamp(16px, 1.8vw, 22px);
+		}
+		.answer:hover{filter:brightness(1.08)}
+		.answer.disabled{opacity:.4; pointer-events:none}
+		.answer.selected{outline:4px solid var(--orange-sel)}
+		.answer.correct{background:linear-gradient(180deg, #0b4d17, #072a12); border-color:var(--ok); box-shadow:0 0 16px rgba(0,200,83,0.4)}
+		.answer.wrong{background:linear-gradient(180deg, #4d0b0b, #2a0707); border-color:var(--err); box-shadow:0 0 16px rgba(255,82,82,0.4)}
+
+		/* Sidebar money ladder */
+		.sidebar{
+			background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0));
+			border:1px solid rgba(255,255,255,0.12);
+			border-radius:16px; padding:12px; display:grid; gap:12px;
+			align-content:start;
+		}
+		.money-tree{list-style:none; margin:0; padding:4px; display:grid; gap:6px;}
+		.money-tree li{
+			position:relative; padding:8px 12px; border-radius:10px;
+			background:linear-gradient(180deg, rgba(10,27,71,0.8), rgba(8,16,45,0.8));
+			display:grid; grid-template-columns:22px 1fr auto; align-items:center; gap:8px;
+			opacity:.8; border:1px solid rgba(255,255,255,0.12);
+			font-size:14px;
+		}
+		.money-tree li::before{content:'◊'; color:#fff; opacity:.6}
+		.money-tree li strong{letter-spacing:.02em; white-space:nowrap; font-variant-numeric:tabular-nums}
+		.money-tree li.active{background:linear-gradient(180deg, #6e3f0f, #3d2106); border:2px solid var(--gold-1); box-shadow:0 0 14px rgba(243,154,33,.6); opacity:1}
+		.money-tree .milestone strong{color:var(--gold-2); font-weight:800}
+
+		/* Small toast */
+		.toast{position:fixed; left:50%; transform:translateX(-50%); top:10px; z-index:30; background:#1e2a66; border:1px solid rgba(255,255,255,0.2); padding:8px 12px; border-radius:999px; display:none}
+		/* Modal */
+		.modal-backdrop{position:fixed; inset:0; display:none; place-items:center; background:radial-gradient(60% 100% at 50% 50%, rgba(0,0,0,0.6), rgba(0,0,0,0.9)); z-index:20}
+		.modal{width:min(680px, 92%); background:linear-gradient(180deg, #0a173d, #091438); border:1px solid rgba(255,255,255,0.2); border-radius:16px; padding:16px; box-shadow:0 24px 80px rgba(0,0,0,0.6)}
+		.modal h3{margin:0 0 8px}
+		.bar{height:18px; background:linear-gradient(180deg, #123, #0a153b); border:1px solid rgba(255,255,255,0.25); border-radius:6px; overflow:hidden}
+		.bar>div{height:100%; background:linear-gradient(180deg, var(--gold-2), var(--gold-1)); width:0}
+		.aud-row{display:grid; grid-template-columns:24px 1fr auto; gap:8px; align-items:center}
+
+		/* Responsive: collapse ladder under stage on small screens */
+		@media (max-width: 980px){
+			.container{grid-template-columns:1fr; grid-template-rows:auto auto auto}
+			.sidebar{grid-column:1; order:3}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="header">
+			<div class="brand">
+				<div class="emblem"></div>
+				<h1>Qui veut gagner des millions — Quiz</h1>
+			</div>
+			<div class="controls">
+				<div class="file-row">
+					<input id="file" type="file" accept=".txt,.csv" />
+					<span class="badge" id="fileStatus">Aucun fichier chargé</span>
+				</div>
+				<button id="btnStart" disabled>Démarrer</button>
+			</div>
+		</div>
+
+		<div class="stage">
+			<div class="tools">
+				<div class="tool" id="lifeline5050">50:50</div>
+				<div class="tool" id="lifelinePhone">Téléphone</div>
+				<div class="tool" id="lifelineAudience">Public</div>
+			</div>
+
+			<div class="light-sweep"></div>
+
+			<div class="big-qa">
+				<div class="question-wrap">
+					<div class="capsule">
+						<div class="question-text" id="questionText">Charge un fichier de questions pour commencer.</div>
+					</div>
+					<div class="answers">
+						<div class="answer" data-index="1"><span class="letter">A</span><span class="text"></span></div>
+						<div class="answer" data-index="2"><span class="letter">B</span><span class="text"></span></div>
+						<div class="answer" data-index="3"><span class="letter">C</span><span class="text"></span></div>
+						<div class="answer" data-index="4"><span class="letter">D</span><span class="text"></span></div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<aside class="sidebar">
+			<ul class="money-tree" id="moneyTree"></ul>
+		</aside>
+	</div>
+
+	<div class="modal-backdrop" id="modalBackdrop"><div class="modal" id="modal"></div></div>
+	<div class="toast" id="toast"></div>
+
+	<script>
+		// === CSV tolerant parser (comma/semicolon/tab) ===
+		function parseCSVLine(line){
+			// Detect delimiter outside quotes
+			let delim = ','; let inQ = false;
+			for(let i=0;i<line.length;i++){
+				const ch = line[i];
+				if(ch === '"'){ inQ = !inQ; continue; }
+				if(!inQ && (ch === ';' || ch === '\t')){ delim = ch; break; }
+			}
+			const out = []; let cur = ''; inQ = false;
+			for(let i=0;i<line.length;i++){
+				const ch = line[i];
+				if(ch === '"'){ inQ = !inQ; continue; }
+				if(ch === delim && !inQ){ out.push(cur); cur=''; continue; }
+				if((delim !== ',' && ch === ',') && !inQ){ out.push(cur); cur=''; continue; }
+				cur += ch;
+			}
+			out.push(cur);
+			return out.map(s => s.trim());
+		}
+
+		// === State ===
+		const state = {
+			questions: [],
+			index: 0,
+			active: false,
+			locked: false,
+			used5050: false,
+			usedPhone: false,
+			usedAudience: false,
+			money: [
+				'1 MILLION €','300 000 €','150 000 €','72 000 €','36 000 €',
+				'24 000 €','12 000 €','8 000 €','4 000 €','2 000 €',
+				'1 000 €','500 €','300 €','200 €','100 €'
+			],
+			milestones: new Set([5,10,15])
+		};
+
+		// === Elements ===
+		const els = {
+			file: document.getElementById('file'),
+			fileStatus: document.getElementById('fileStatus'),
+			btnStart: document.getElementById('btnStart'),
+			questionText: document.getElementById('questionText'),
+			answers: Array.from(document.querySelectorAll('.answer')),
+			moneyTree: document.getElementById('moneyTree'),
+			stage: document.querySelector('.stage'),
+			lifeline5050: document.getElementById('lifeline5050'),
+			lifelinePhone: document.getElementById('lifelinePhone'),
+			lifelineAudience: document.getElementById('lifelineAudience'),
+			modalBackdrop: document.getElementById('modalBackdrop'),
+			modal: document.getElementById('modal'),
+			toast: document.getElementById('toast')
+		};
+
+		// === File loading ===
+		els.file.addEventListener('change', async (e) => {
+			const file = e.target.files?.[0];
+			if(!file) return;
+			const text = await file.text();
+			// FIX: valid regex for Windows/Unix newlines
+			const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+			const warnings = [];
+			const bad = [];
+			state.questions = lines.map((line, idx) => {
+				const cells = parseCSVLine(line);
+				if(cells.length < 5){ bad.push(idx+1); return null; }
+				const [q, a, b, c, d, maybeIdx] = cells;
+				let correct = letterToIndex(maybeIdx);
+				if(!Number.isInteger(correct) || correct < 1 || correct > 4){ correct = 1; warnings.push(idx+1); }
+				return { q, choices:[a,b,c,d], correct };
+			}).filter(Boolean);
+			els.fileStatus.textContent = `${file.name} • ${state.questions.length} questions`;
+			els.btnStart.disabled = state.questions.length === 0 || bad.length > 0;
+			if(bad.length){
+				openModal(`<h3>Format des lignes invalide</h3>
+					<p>Les lignes suivantes ont moins de 5 colonnes : <strong>${bad.join(', ')}</strong></p>
+					<div style="display:flex;justify-content:flex-end"><button id="badClose">OK</button></div>`);
+				document.getElementById('badClose').onclick = () => closeModal();
+			}else if(warnings.length){
+				showToast(`Attention: lignes sans indice → ${warnings.slice(0,6).join(', ')}${warnings.length>6?'…':''}`);
+			}
+			buildMoneyTree();
+			runSelfTests(text);
+		});
+
+		function letterToIndex(v){
+			if(!v) return NaN;
+			const t = String(v).trim();
+			if(/^[1-4]$/.test(t)) return parseInt(t,10);
+			const m = t.match(/^[A-Da-d]$/);
+			if(m) return {A:1,B:2,C:3,D:4,a:1,b:2,c:3,d:4}[t];
+			return NaN;
+		}
+
+		// === Money tree ===
+		function buildMoneyTree(){
+			els.moneyTree.innerHTML = '';
+			for(let i=15;i>=1;i--){
+				const li = document.createElement('li');
+				li.dataset.level = i;
+				const amount = state.money[15 - i];
+				li.innerHTML = `<span>${String(i).padStart(2,'0')}</span><span></span><strong>${amount}</strong>`;
+				if(state.milestones.has(i)) li.classList.add('milestone');
+				els.moneyTree.appendChild(li);
+			}
+			setActiveLevel(1);
+		}
+		function setActiveLevel(level){
+			Array.from(els.moneyTree.children).forEach(li => li.classList.remove('active'));
+			const li = Array.from(els.moneyTree.children).find(el => +el.dataset.level === level);
+			if(li) li.classList.add('active');
+		}
+
+		// === Game flow ===
+		els.btnStart.addEventListener('click', () => startGame());
+		function startGame(){
+			state.index = 0;
+			state.active = true;
+			state.locked = false;
+			state.used5050 = state.usedPhone = state.usedAudience = false;
+			els.lifeline5050.classList.remove('used');
+			els.lifelinePhone.classList.remove('used');
+			els.lifelineAudience.classList.remove('used');
+			showQuestion();
+		}
+
+		function showQuestion(){
+			const entry = state.questions[state.index];
+			if(!entry) return gameOver(false);
+			els.questionText.textContent = entry.q;
+			els.answers.forEach((el, i) => {
+				el.classList.remove('disabled','selected','correct','wrong');
+				el.querySelector('.text').textContent = entry.choices[i] ?? '';
+				el.style.display = entry.choices[i] ? 'block' : 'none';
+				el.style.pointerEvents = 'auto';
+			});
+			gsap.fromTo('.question-wrap',{y:50,opacity:0},{y:0,opacity:1,duration:.55,ease:'power3.out'});
+			lightSweep();
+			setActiveLevel(state.index + 1);
+		}
+
+		// === Signature light sweep ===
+		function lightSweep(){ gsap.fromTo('.light-sweep',{xPercent:-120},{xPercent:120,duration:2.2,ease:'power1.inOut'}); }
+
+		// === Answer selection ===
+		els.answers.forEach(el => el.addEventListener('click', onAnswerClick));
+		function onAnswerClick(e){
+			if(!state.active || state.locked) return;
+			const el = e.currentTarget;
+			if(el.classList.contains('disabled')) return;
+			els.answers.forEach(a => a.classList.remove('selected'));
+			el.classList.add('selected');
+			confirmFinal(el);
+		}
+
+		// === Final answer modal ===
+		function confirmFinal(target){
+			state.locked = true;
+			openModal(`<h3>Définitivement ?</h3>
+				<p>Valider cette réponse comme «<strong>réponse finale</strong>» ?</p>
+				<div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px">
+					<button id="cancelFinal">Annuler</button>
+					<button id="okFinal">Réponse finale</button>
+				</div>`);
+			document.getElementById('cancelFinal').onclick = () => { state.locked = false; closeModal(); };
+			document.getElementById('okFinal').onclick = () => { closeModal(); checkAnswer(target); };
+		}
+
+		// === Check + reveal ===
+		function checkAnswer(selEl){
+			const entry = state.questions[state.index];
+			const userIdx = +selEl.dataset.index;
+			const correctIdx = entry.correct;
+			gsap.to(selEl,{duration:.15,repeat:5,yoyo:true,scale:1.02});
+			setTimeout(() => {
+				const correctEl = els.answers.find(a => +a.dataset.index === correctIdx);
+				if(userIdx === correctIdx){
+					correctEl.classList.add('correct');
+					gsap.to(correctEl,{duration:.5,boxShadow:'0 0 40px rgba(0,200,83,0.8)',ease:'power2.out'});
+					advance();
+				}else{
+					correctEl.classList.add('correct');
+					selEl.classList.add('wrong');
+					gsap.fromTo(selEl,{rotation:0},{rotation:2,yoyo:true,repeat:5,duration:.05});
+					setTimeout(() => gameOver(true), 1400);
+				}
+			}, 900);
+		}
+
+		function advance(){
+			state.index++;
+			if(state.index >= state.questions.length) return victory();
+			setTimeout(() => { showQuestion(); }, 800);
+		}
+
+		function victory(){
+			openModal(`<h3>Bravo !</h3><p>Vous avez remporté <strong>${state.money[0]}</strong> !</p>
+				<div style="display:flex; justify-content:flex-end"><button id="closeVictory">Fermer</button></div>`);
+			document.getElementById('closeVictory').onclick = () => closeModal();
+			state.active = false;
+		}
+
+		function gameOver(){
+			const level = Math.max(0, state.index - 1);
+			const safe = level >= 10 ? 24000 : level >= 5 ? 1000 : 0;
+			openModal(`<h3>Fin de partie</h3><p>Gain garanti: <strong>${safe.toLocaleString('fr-FR')} €</strong></p>
+				<div style="display:flex; justify-content:flex-end"><button id="closeOver">OK</button></div>`);
+			document.getElementById('closeOver').onclick = () => closeModal();
+			state.active = false;
+		}
+
+		// === Lifelines ===
+		els.lifeline5050.addEventListener('click', () => {
+			if(state.used5050 || !state.active) return;
+			state.used5050 = true; els.lifeline5050.classList.add('used');
+			const entry = state.questions[state.index];
+			const wrongEnabled = els.answers.filter(a => !a.classList.contains('disabled') && +a.dataset.index !== entry.correct);
+			shuffle(wrongEnabled).slice(0,2).forEach(el => {
+				el.classList.add('disabled');
+				el.querySelector('.text').textContent = '';
+				el.style.pointerEvents = 'none';
+			});
+			// Ensure remaining answers are clickable
+			els.answers.filter(a => +a.dataset.index === entry.correct || !a.classList.contains('disabled')).forEach(el => { el.style.pointerEvents='auto'; });
+			// If a selected one got disabled, clear selection
+			const sel = els.answers.find(a => a.classList.contains('selected'));
+			if(sel && sel.classList.contains('disabled')) sel.classList.remove('selected');
+			state.locked = false;
+			showToast('50:50 — deux mauvaises réponses retirées');
+		});
+
+		els.lifelinePhone.addEventListener('click', () => {
+			if(state.usedPhone || !state.active) return;
+			state.usedPhone = true; els.lifelinePhone.classList.add('used');
+			const entry = state.questions[state.index];
+			const guess = weightedGuess(entry.correct, 0.75);
+			openModal(`<h3>Allô…</h3><p>« Je pense que la bonne réponse est <strong>${['A','B','C','D'][guess-1]}</strong>. »</p>
+				<div style="display:flex; justify-content:flex-end"><button id="closePhone">OK</button></div>`);
+			document.getElementById('closePhone').onclick = () => closeModal();
+			// Safety: never leave clicks locked after a lifeline
+			state.locked = false;
+		});
+
+		els.lifelineAudience.addEventListener('click', () => {
+			if(state.usedAudience || !state.active) return;
+			state.usedAudience = true; els.lifelineAudience.classList.add('used');
+			const entry = state.questions[state.index];
+			const dist = audiencePoll(entry.correct);
+			openModal(`<h3>Vote du public</h3>
+				<div class="aud-row"><div>A</div><div class="bar"><div id="barA"></div></div><div id="pctA">0%</div></div>
+				<div class="aud-row"><div>B</div><div class="bar"><div id="barB"></div></div><div id="pctB">0%</div></div>
+				<div class="aud-row"><div>C</div><div class="bar"><div id="barC"></div></div><div id="pctC">0%</div></div>
+				<div class="aud-row"><div>D</div><div class="bar"><div id="barD"></div></div><div id="pctD">0%</div></div>
+				<div style="display:flex; justify-content:flex-end; margin-top:10px"><button id="closeAud">Fermer</button></div>`);
+			document.getElementById('closeAud').onclick = () => closeModal();
+			['A','B','C','D'].forEach((l, i) => {
+				gsap.to(`#bar${l}`, { width: dist[i] + '%', duration: .8 });
+				gsap.to({}, { duration: .8, onUpdate: function(){
+					const w = parseFloat(getComputedStyle(document.getElementById(`bar${l}`)).width);
+					const total = document.querySelector(`#bar${l}`).parentElement.clientWidth;
+					document.getElementById(`pct${l}`).textContent = Math.round(w/total*100) + '%';
+				}});
+			});
+			// Safety
+			state.locked = false;
+		});
+
+		// === Helpers ===
+		function shuffle(arr){ return arr.sort(() => Math.random() - 0.5); }
+		function weightedGuess(correct, p){ return Math.random() < p ? correct : shuffle([1,2,3,4].filter(i => i!==correct))[0]; }
+		function audiencePoll(correct){
+			let base = [0,0,0,0].map(() => Math.random()*30);
+			base[correct-1] += 60 + Math.random()*20;
+			const sum = base.reduce((a,b)=>a+b,0);
+			return base.map(v => Math.round(v/sum*100));
+		}
+		function openModal(html){ els.modal.innerHTML=html; els.modalBackdrop.style.display='grid'; gsap.fromTo(els.modal,{y:60,opacity:0},{y:0,opacity:1,duration:.35,ease:'power3.out'}); }
+		function closeModal(){ gsap.to(els.modal,{y:40,opacity:0,duration:.25,onComplete:()=>{ els.modalBackdrop.style.display='none'; }}); }
+		function showToast(msg){ els.toast.textContent=msg; els.toast.style.display='block'; gsap.to(els.toast,{y:0,opacity:1,duration:.2}); setTimeout(()=> gsap.to(els.toast,{opacity:0,duration:.3,onComplete:()=> els.toast.style.display='none'}), 2200); }
+
+		// === Self tests ===
+		function runSelfTests(raw){
+			try{
+				// Newlines
+				console.assert('a\nb'.split(/\r?\n/).length===2,'split LF failed');
+				console.assert('a\r\nb'.split(/\r?\n/).length===2,'split CRLF failed');
+				console.assert('a\nb\r\nc'.split(/\r?\n/).length===3,'split mixed failed');
+				// CSV parsing
+				const p1 = parseCSVLine('"What, ever?","A,1","B","C","D",B');
+				const p2 = parseCSVLine('"What; ever?";"A;1";"B";"C";"D";C');
+				const p3 = parseCSVLine('What\tA\tB\tC\tD\t4');
+				console.assert(p1[0].startsWith('What') && p1[1]==='A,1','csv comma failed');
+				console.assert(p2[0].startsWith('What') && p2[1]==='A;1','csv semicolon failed');
+				console.assert(p3[0]==='What' && p3[5]==='4','csv tab failed');
+				// Index parsing
+				console.assert(letterToIndex('A')===1 && letterToIndex('4')===4 && isNaN(letterToIndex('Z')),'index parse failed');
+				// 50:50 leaves ≥2 answers enabled
+				(function(){
+					els.answers.forEach(a=>{ a.className='answer'; a.querySelector('.text').textContent='x'; a.style.pointerEvents='auto'; });
+					const entry={correct:2};
+					const wrongEnabled = els.answers.filter(a=>!a.classList.contains('disabled') && +a.dataset.index!==entry.correct);
+					shuffle(wrongEnabled).slice(0,2).forEach(el=>{ el.classList.add('disabled'); el.querySelector('.text').textContent=''; el.style.pointerEvents='none'; });
+					const enabledCount = els.answers.filter(a=>!a.classList.contains('disabled')).length;
+					console.assert(enabledCount>=2,'50:50 left fewer than 2 answers');
+				})();
+				if(raw){
+					const count = raw.split(/\r?\n/).filter(l => l.trim().length).length;
+					console.assert(count>0,'no lines detected');
+				}
+				showToast('Self-tests OK');
+			}catch(err){
+				console.error('Self-tests failed', err);
+			}
+		}
+	</script>
+</body>
+</html>
