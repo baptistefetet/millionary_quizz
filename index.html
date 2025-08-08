@@ -343,6 +343,7 @@
 			toast: document.getElementById('toast'),
 			tools: document.getElementById('tools'),
 			fileControls: document.getElementById('fileControls'),
+			sidebar: document.querySelector('.sidebar'),
 		};
 
 		// === File loading ===
@@ -423,6 +424,8 @@
 			// Cacher la sélection de fichier et changer le bouton
 			els.fileControls.querySelector('.file-row').style.display = 'none';
 			els.btnStart.textContent = 'Arrêter';
+			// Affiche la sidebar des gains
+			els.sidebar.style.display = '';
 			showQuestion();
 		}
 
@@ -457,7 +460,16 @@
 			if (qw) {
 				qw.style.transform = '';
 				qw.style.opacity = '';
+				qw.style.alignContent = '';
+				qw.style.justifyItems = '';
+				qw.style.height = '';
 			}
+			// Cache les bonus
+			els.tools.style.display = 'none';
+			// Réaffiche la sélection de fichier
+			els.fileControls.querySelector('.file-row').style.display = '';
+			// Cache la sidebar des gains
+			els.sidebar.style.display = 'none';
 		}
 
 		function showQuestion(){
@@ -553,9 +565,11 @@
 		function victory(){
 			openModal(`<h3>Bravo !</h3><p>Vous avez remporté <strong>${state.money[0]}</strong> !</p>
 				<div style="display:flex; justify-content:flex-end"><button id="closeVictory">Fermer</button></div>`);
-			document.getElementById('closeVictory').onclick = () => closeModal();
+			document.getElementById('closeVictory').onclick = () => {
+				closeModal();
+				resetUIAfterStop();
+			};
 			state.active = false;
-			resetUIAfterStop(); // <-- Ajouté ici
 		}
 
 		function gameOver(){
@@ -563,9 +577,11 @@
 			const safe = level >= 10 ? 24000 : level >= 5 ? 1000 : 0;
 			openModal(`<h3>Fin de partie</h3><p>Gain garanti: <strong>${safe.toLocaleString('fr-FR')} €</strong></p>
 				<div style="display:flex, justify-content:flex-end"><button id="closeOver">OK</button></div>`);
-			document.getElementById('closeOver').onclick = () => closeModal();
+			document.getElementById('closeOver').onclick = () => {
+				closeModal();
+				resetUIAfterStop();
+			};
 			state.active = false;
-			resetUIAfterStop(); // <-- Ajouté ici
 		}
 
 		// === Lifelines ===
@@ -641,6 +657,30 @@
 		els.tools.style.display = 'none';
 		// Au chargement initial, s'assurer que le bouton est bien "Démarrer"
 		els.btnStart.textContent = 'Démarrer';
+
+		// Réinitialisation complète à l'ouverture de la page
+		document.addEventListener('DOMContentLoaded', () => {
+			// Réinitialise le champ fichier
+			els.file.value = '';
+			els.fileStatus.textContent = 'Aucun fichier chargé';
+			state.questions = [];
+			els.btnStart.disabled = true;
+			// Cache la sidebar des gains
+			els.sidebar.style.display = 'none';
+			// Cache les jokers
+			els.tools.style.display = 'none';
+			// Réinitialise la scène
+			els.answersBlock.style.display = 'none';
+			els.questionText.textContent = 'Charge un fichier de questions pour commencer.';
+			const qw = document.querySelector('.question-wrap');
+			if (qw) {
+				qw.style.transform = '';
+				qw.style.opacity = '';
+				qw.style.alignContent = '';
+				qw.style.justifyItems = '';
+				qw.style.height = '';
+			}
+		});
 		// === Audio tag parser ===
 		function parseAnswerText(text) {
 			// Cherche une balise [nom.mp3] ou [nom.wav] ou [nom.ogg]
