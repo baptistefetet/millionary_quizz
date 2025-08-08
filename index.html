@@ -119,12 +119,20 @@
 
 		.answers{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
 		.answer{
-			position:relative; padding:16px 22px 16px 80px; border-radius:999px;
+			position:relative;
+			padding:16px 22px 16px 80px;
+			border-radius:999px;
 			border:2px solid var(--gold-1);
 			background:linear-gradient(180deg, #40297f, #291a63);
 			box-shadow:0 0 12px rgba(247,179,43,.25), inset 0 0 22px rgba(0,0,0,.55);
 			font-weight:800; cursor:pointer; user-select:none;
 			font-size: clamp(20px, 2.4vw, 28px);
+			/* --- CENTRAGE VERTICAL --- */
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: flex-start;
+			min-height: 80px;
 		}
 		.answer .letter{
 			position:absolute; left:20px; top:50%; transform:translateY(-50%);
@@ -134,11 +142,62 @@
 			display:grid; place-items:center; font-weight:900;
 			font-size: clamp(16px, 1.8vw, 22px);
 		}
+		.answer .text {
+			/* Pour éviter que le texte soit trop large à côté de l'audio */
+			width: 100%;
+			display: block;
+		}
 		.answer:hover{filter:brightness(1.08)}
 		.answer.disabled{opacity:.4; pointer-events:none}
 		.answer.selected{outline:4px solid var(--orange-sel)}
 		.answer.correct{background:linear-gradient(180deg, #0b4d17, #072a12); border-color:var(--ok); box-shadow:0 0 16px rgba(0,200,83,0.4)}
 		.answer.wrong{background:linear-gradient(180deg, #4d0b0b, #2a0707); border-color:var(--err); box-shadow:0 0 16px rgba(255,82,82,0.4)}
+
+		/* --- AUDIO PLAYER CUSTOM STYLE --- */
+		.answer audio {
+			width: calc(100% - 32px);
+			margin-top: 10px;
+			margin-right: 16px;
+			border-radius: 8px;
+			background: linear-gradient(90deg, #2e206a 0%, #1d1552 100%);
+			box-shadow: 0 0 8px rgba(247,179,43,0.18), 0 2px 8px rgba(0,0,0,0.25);
+			border: 1.5px solid var(--gold-1);
+			padding: 2px 0;
+			outline: none;
+			max-width: 420px;
+		}
+		.answer audio::-webkit-media-controls-panel {
+			background: linear-gradient(90deg, #2e206a 0%, #1d1552 100%);
+			border-radius: 8px;
+			border: none;
+		}
+		.answer audio::-webkit-media-controls-play-button,
+		.answer audio::-webkit-media-controls-current-time-display,
+		.answer audio::-webkit-media-controls-time-remaining-display,
+		.answer audio::-webkit-media-controls-timeline,
+		.answer audio::-webkit-media-controls-volume-slider {
+			filter: invert(0.8) sepia(1) saturate(2) hue-rotate(-30deg);
+		}
+		.answer audio::-webkit-media-controls-play-button {
+			background-color: var(--gold-1);
+			border-radius: 50%;
+		}
+		/* Pour Firefox */
+		.answer audio::-moz-range-thumb {
+			background: var(--gold-1);
+			border: none;
+		}
+		.answer audio::-moz-range-track {
+			background: #ffd173;
+		}
+		/* Pour Edge/Chromium */
+		.answer audio::-ms-fill-lower {
+			background: #ffd173;
+		}
+		.answer audio::-ms-fill-upper {
+			background: #2e206a;
+		}
+		/* --- END AUDIO PLAYER CUSTOM STYLE --- */
 
 		/* Sidebar money ladder */
 		.sidebar{
@@ -402,16 +461,35 @@
 		}
 
 		function showQuestion(){
-			state.locked = false; // <-- LA CORRECTION : Déverrouille les clics pour la nouvelle question.
+			state.locked = false;
 			const entry = state.questions[state.index];
 			if(!entry) return gameOver(false);
 			els.answersBlock.style.display = 'grid';
 			els.questionText.textContent = entry.q;
 			els.answers.forEach((el, i) => {
 				el.classList.remove('disabled','selected','correct','wrong');
-				el.querySelector('.text').textContent = entry.choices[i] ?? '';
-				el.style.display = entry.choices[i] ? 'block' : 'none';
-				el.style.pointerEvents = 'auto'; // <-- Ajouté pour forcer la réactivation du clic
+				// --- AUDIO PATCH START ---
+				const answer = entry.choices[i] ?? '';
+				const { cleanText, audioFile } = parseAnswerText(answer);
+				const textSpan = el.querySelector('.text');
+				textSpan.textContent = cleanText;
+				// Supprime tout widget audio précédent
+				const prevAudio = el.querySelector('audio');
+				if (prevAudio) prevAudio.remove();
+				if (audioFile) {
+					const audio = document.createElement('audio');
+					audio.controls = true;
+					audio.style.display = 'block';
+					audio.style.marginTop = '8px';
+					audio.style.width = 'calc(100% - 32px)';
+					audio.style.marginRight = '16px';
+					audio.style.maxWidth = '420px';
+					audio.src = audioFile;
+					textSpan.after(audio);
+				}
+				// --- AUDIO PATCH END ---
+				el.style.display = answer ? 'block' : 'none';
+				el.style.pointerEvents = 'auto';
 			});
 			gsap.fromTo('.question-wrap',{y:50,opacity:0},{y:0,opacity:1,duration:.55,ease:'power3.out'});
 			lightSweep();
@@ -484,7 +562,7 @@
 			const level = Math.max(0, state.index - 1);
 			const safe = level >= 10 ? 24000 : level >= 5 ? 1000 : 0;
 			openModal(`<h3>Fin de partie</h3><p>Gain garanti: <strong>${safe.toLocaleString('fr-FR')} €</strong></p>
-				<div style="display:flex; justify-content:flex-end"><button id="closeOver">OK</button></div>`);
+				<div style="display:flex, justify-content:flex-end"><button id="closeOver">OK</button></div>`);
 			document.getElementById('closeOver').onclick = () => closeModal();
 			state.active = false;
 			resetUIAfterStop(); // <-- Ajouté ici
@@ -563,6 +641,15 @@
 		els.tools.style.display = 'none';
 		// Au chargement initial, s'assurer que le bouton est bien "Démarrer"
 		els.btnStart.textContent = 'Démarrer';
+		// === Audio tag parser ===
+		function parseAnswerText(text) {
+			// Cherche une balise [nom.mp3] ou [nom.wav] ou [nom.ogg]
+			const audioRegex = /\[([^\[\]]+\.(mp3|wav|ogg))\]/i;
+			const match = text.match(audioRegex);
+			let cleanText = text.replace(audioRegex, '').trim();
+			let audioFile = match ? match[1] : null;
+			return { cleanText, audioFile };
+		}
 	</script>
 </body>
 </html>
