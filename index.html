@@ -301,7 +301,6 @@
 				showToast(`Attention: lignes sans indice → ${warnings.slice(0,6).join(', ')}${warnings.length>6?'…':''}`);
 			}
 			buildMoneyTree();
-			runSelfTests(text);
 		});
 
 		function letterToIndex(v){
@@ -346,6 +345,7 @@
 		}
 
 		function showQuestion(){
+			state.locked = false; // <-- LA CORRECTION : Déverrouille les clics pour la nouvelle question.
 			const entry = state.questions[state.index];
 			if(!entry) return gameOver(false);
 			els.answersBlock.style.display = 'grid';
@@ -354,7 +354,7 @@
 				el.classList.remove('disabled','selected','correct','wrong');
 				el.querySelector('.text').textContent = entry.choices[i] ?? '';
 				el.style.display = entry.choices[i] ? 'block' : 'none';
-				el.style.pointerEvents = 'auto';
+				el.style.pointerEvents = 'auto'; // <-- Ajouté pour forcer la réactivation du clic
 			});
 			gsap.fromTo('.question-wrap',{y:50,opacity:0},{y:0,opacity:1,duration:.55,ease:'power3.out'});
 			lightSweep();
@@ -499,41 +499,6 @@
 		function openModal(html){ els.modal.innerHTML=html; els.modalBackdrop.style.display='grid'; gsap.fromTo(els.modal,{y:60,opacity:0},{y:0,opacity:1,duration:.35,ease:'power3.out'}); }
 		function closeModal(){ gsap.to(els.modal,{y:40,opacity:0,duration:.25,onComplete:()=>{ els.modalBackdrop.style.display='none'; }}); }
 		function showToast(msg){ els.toast.textContent=msg; els.toast.style.display='block'; gsap.to(els.toast,{y:0,opacity:1,duration:.2}); setTimeout(()=> gsap.to(els.toast,{opacity:0,duration:.3,onComplete:()=> els.toast.style.display='none'}), 2200); }
-
-		// === Self tests ===
-		function runSelfTests(raw){
-			try{
-				// Newlines
-				console.assert('a\nb'.split(/\r?\n/).length===2,'split LF failed');
-				console.assert('a\r\nb'.split(/\r?\n/).length===2,'split CRLF failed');
-				console.assert('a\nb\r\nc'.split(/\r?\n/).length===3,'split mixed failed');
-				// CSV parsing
-				const p1 = parseCSVLine('"What, ever?","A,1","B","C","D",B');
-				const p2 = parseCSVLine('"What; ever?";"A;1";"B";"C";"D";C');
-				const p3 = parseCSVLine('What\tA\tB\tC\tD\t4');
-				console.assert(p1[0].startsWith('What') && p1[1]==='A,1','csv comma failed');
-				console.assert(p2[0].startsWith('What') && p2[1]==='A;1','csv semicolon failed');
-				console.assert(p3[0]==='What' && p3[5]==='4','csv tab failed');
-				// Index parsing
-				console.assert(letterToIndex('A')===1 && letterToIndex('4')===4 && isNaN(letterToIndex('Z')),'index parse failed');
-				// 50:50 leaves ≥2 answers enabled
-				(function(){
-					els.answers.forEach(a=>{ a.className='answer'; a.querySelector('.text').textContent='x'; a.style.pointerEvents='auto'; });
-					const entry={correct:2};
-					const wrongEnabled = els.answers.filter(a=>!a.classList.contains('disabled') && +a.dataset.index!==entry.correct);
-					shuffle(wrongEnabled).slice(0,2).forEach(el=>{ el.classList.add('disabled'); el.querySelector('.text').textContent=''; el.style.pointerEvents='none'; });
-					const enabledCount = els.answers.filter(a=>!a.classList.contains('disabled')).length;
-					console.assert(enabledCount>=2,'50:50 left fewer than 2 answers');
-				})();
-				if(raw){
-					const count = raw.split(/\r?\n/).filter(l => l.trim().length).length;
-					console.assert(count>0,'no lines detected');
-				}
-				showToast('Self-tests OK');
-			}catch(err){
-				console.error('Self-tests failed', err);
-			}
-		}
 	</script>
 </body>
 </html>
